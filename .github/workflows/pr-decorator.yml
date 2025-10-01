@@ -78,6 +78,7 @@ jobs:
         with:
           repository: cekay79/fluxi-public-gitops
           ref: main
+          token: ${{ secrets.GH_PAT }}
 
       - name: Collect service labels
         id: svc
