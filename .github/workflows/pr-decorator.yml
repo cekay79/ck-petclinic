@@ -11,7 +11,7 @@ jobs:
       - name: Checkout Ziel-Repo (Flux Config)
         uses: actions/checkout@v4
         with:
-          repository: fluxi-public-gitops
+          repository: cekay79/fluxi-public-gitops
           ref: main
 
       - name: Collect service labels
