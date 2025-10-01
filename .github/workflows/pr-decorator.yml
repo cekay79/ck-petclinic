@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    name: Build and Push Docker Image and Helm Chart to ACR
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -69,6 +70,7 @@ jobs:
 
   servicelabels:
     runs-on: ubuntu-latest
+    name: Flux Preview PR Deployment
     needs: build
     steps:
       - name: Checkout Ziel-Repo (Flux Config)
@@ -115,6 +117,6 @@ jobs:
           git add  $PREVIEW_DIR/patches.yaml
           git add  $PREVIEW_DIR/namespace.yaml
           git add "$PREVIEW_DIR/kustomization.yaml"
-          hit commit -m "chore: preview update für PR #${{ github.event.pull_request.number }}"
+          git commit -m "chore: preview update für PR #${{ github.event.pull_request.number }}"
           git push origin main
-          fi
+          
