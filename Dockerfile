@@ -6,6 +6,7 @@ WORKDIR /workspace
 COPY pom.xml .
 RUN mvn -q -DskipTests dependency:go-offline
 
+
 # Quellcode kopieren und bauen
 COPY src ./src
 RUN mvn -q -DskipTests package \

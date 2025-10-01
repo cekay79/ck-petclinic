@@ -1,0 +1,14 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: petclinic
+  namespace: flux-system
+spec:
+  values:
+    replicaCount: 10
+    image:
+      repository: ckcluster.azurecr.io/petclinic
+      tag: $IMAGETAG
+  chart:
+    spec:
+      version: $CHARTVERSION
