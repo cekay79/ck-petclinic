@@ -118,7 +118,7 @@ jobs:
             echo "kind: Kustomization"
             echo "namespace: pr-${{ github.event.pull_request.number }}"
             echo "resources:"
-            echo "  - ../../base/apps/petclinic"
+            echo "  - ../../base/apps/pet-clinic"
             for s in "${SVC[@]}"; do
               echo "  - ../../base/apps/$s"
             done
