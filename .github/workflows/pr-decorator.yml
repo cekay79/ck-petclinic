@@ -8,6 +8,12 @@ jobs:
   servicelabels:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Ziel-Repo (Flux Config)
+        uses: actions/checkout@v4
+        with:
+          repository: fluxi-public-gitops
+          ref: main
+
       - name: Collect service labels
         id: svc
         run: |
