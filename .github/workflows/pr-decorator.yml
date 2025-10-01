@@ -5,6 +5,64 @@ on:
 
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '17' ]
+    env:
+      IMAGE_NAME: petclinic
+      CHART_DIR: helm/petclinic
+      CHART_NAME: petclinic
+    outputs:
+      preview_patch: ${{ steps.preview_patch.outputs.patch }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - uses: azure/docker-login@v2
+        with:
+          login-server: ckcluster.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image to ACR
+        run: |
+          REG="ckcluster.azurecr.io"
+          docker build -t "$REG/$IMAGE_NAME:${{ github.sha }}" -t "$REG/$IMAGE_NAME:latest" .
+          docker push "$REG/$IMAGE_NAME:${{ github.sha }}"
+          docker push "$REG/$IMAGE_NAME:latest"
+
+      - name: Push Helm chart to ACR (OCI)
+        env:
+          HELM_EXPERIMENTAL_OCI: 1
+        run: |
+          REG="ckcluster.azurecr.io"
+          helm registry login "$REG" --username "${{ secrets.REGISTRY_USERNAME }}" --password "${{ secrets.REGISTRY_PASSWORD }}"
+          CHART_VERSION="0.1.0-${GITHUB_SHA::7}"
+          helm package "$CHART_DIR" --version "$CHART_VERSION"
+          helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://$REG/helm"
+
+      - name: create preview patch
+        id: preview_patch
+        run:
+          # Quelle anpassen: patches-template.yaml ist ein Platzhalter
+          PATCH_CONTENT="$(sed \
+          -e "s|\$IMAGETAG|${IMAGETAG}|g" \
+          -e "s|\$CHARTVERSION|${CHARTVERSION}|g" previews/patches.yaml)"
+          echo "$PATCH_CONTENT" > patches.yaml
+          {
+          echo "patch<<'EOF'"
+          printf '%s\n' "$PATCH_CONTENT"
+          echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
   servicelabels:
     runs-on: ubuntu-latest
     steps:
@@ -23,20 +81,20 @@ jobs:
       - name: Build kustomization.yaml from labels
         if: env.SERVICES != ''
         run: |
-          PREVIEW_DIR="clusters/prod/apps/previews/pr-${{ github.event.pull_request.number }}"
+          PREVIEW_DIR="clusters/npi/previews/pr-${{ github.event.pull_request.number }}"
+          mkdir -p "$PREVIEW_DIR"
           IFS=',' read -ra SVC <<< "$SERVICES"
           {
             echo "apiVersion: kustomize.config.k8s.io/v1beta1"
             echo "kind: Kustomization"
-            echo "namespace: shop-pr-${{ github.event.pull_request.number }}"
+            echo "namespace: pr-${{ github.event.pull_request.number }}"
             echo "resources:"
             for s in "${SVC[@]}"; do
-              echo "  - ../../services/overlays/$s"
+              echo "  - ../../base/$s"
             done
             echo "  - namespace.yaml"
-            echo "  - ../../base/shop"
             echo "patches:"
-            echo "  - path: patch-deployment.yaml"
+            echo "  - path: patches.yaml"
           } 
-          # > "$PREVIEW_DIR/kustomization.yaml"
+           > "$PREVIEW_DIR/kustomization.yaml"
           # git add "$PREVIEW_DIR/kustomization.yaml"
