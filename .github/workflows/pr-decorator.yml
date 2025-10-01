@@ -42,6 +42,7 @@ jobs:
           #           PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|12|g" -e "s|\$CHARTVERSION|12|g" previews/patches.yaml)"
           PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|${{ github.sha }}|g" -e "s|\$CHARTVERSION|${CHART_VERSION}|g" previews/patches.yaml)"
           echo "$PATCH_CONTENT" > patches.yaml
+          echo "$PATCH_CONTENT"
           DELIM="PATCH_EOF_$(date +%s)"
           {
             echo "patch<<$DELIM"
