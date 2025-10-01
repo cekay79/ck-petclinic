@@ -104,9 +104,9 @@ jobs:
             echo "kind: Kustomization"
             echo "namespace: pr-${{ github.event.pull_request.number }}"
             echo "resources:"
-            echo "  - ../../base/petclinic"
+            echo "  - ../../base/apps/petclinic"
             for s in "${SVC[@]}"; do
-              echo "  - ../../base/$s"
+              echo "  - ../../base/apps/$s"
             done
             echo "  - namespace.yaml"
             echo "patches:"
