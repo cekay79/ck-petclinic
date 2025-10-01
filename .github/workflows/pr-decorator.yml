@@ -11,7 +11,7 @@ jobs:
       - name: Collect service labels
         id: svc
         run: |
-          echo "SERVICES=$(jq -r '.pull_request.labels[].name | select(startswith("svc:")) | sub("^svc:";"")' \
+          echo "SERVICES=$(jq -r '.event.pull_request.labels[].name | select(startswith("svc:")) | sub("^svc:";"")' \
             <<< '${{ toJson(github) }}' | paste -sd, -)" >> $GITHUB_ENV
       
       - name: Build kustomization.yaml from labels
