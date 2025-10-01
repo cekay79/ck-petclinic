@@ -32,6 +32,22 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      - name: create preview patch
+        id: preview_patch
+        run: |
+          REG="ckcluster.azurecr.io"
+          CHART_VERSION="0.1.0-${GITHUB_SHA::7}"
+          # Quelle anpassen: patches-template.yaml ist ein Platzhalter
+          #           PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|12|g" -e "s|\$CHARTVERSION|12|g" previews/patches.yaml)"
+          PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|${{ github.sha }}|g" -e "s|\$CHARTVERSION|${CHART_VERSION}|g" previews/patches.yaml)"
+          echo "$PATCH_CONTENT" > patches.yaml
+          DELIM="PATCH_EOF_$(date +%s)"
+          {
+            echo "patch<<$DELIM"
+            printf '%s\n' "$PATCH_CONTENT"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and push Docker image to ACR
         run: |
           REG="ckcluster.azurecr.io"
@@ -49,20 +65,7 @@ jobs:
           helm package "$CHART_DIR" --version "$CHART_VERSION"
           helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://$REG/helm"
 
-      - name: create preview patch
-        id: preview_patch
-        run: |
-          REG="ckcluster.azurecr.io"
-          CHART_VERSION="0.1.0-${GITHUB_SHA::7}"
-          # Quelle anpassen: patches-template.yaml ist ein Platzhalter
-          #           PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|12|g" -e "s|\$CHARTVERSION|12|g" previews/patches.yaml)"
-          PATCH_CONTENT="$(sed -e "s|\$IMAGETAG|${{ github.sha }}|g" -e "s|\$CHARTVERSION|${CHART_VERSION}|g" previews/patches.yaml)"
-          echo "$PATCH_CONTENT" > patches.yaml
-          {
-          echo "patch<<'EOF'"
-          printf '%s\n' "$PATCH_CONTENT"
-          echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+
 
   servicelabels:
     runs-on: ubuntu-latest
