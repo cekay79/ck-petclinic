@@ -88,12 +88,19 @@ jobs:
         run: |
           PREVIEW_DIR="clusters/npi/previews/pr-${{ github.event.pull_request.number }}"
           mkdir -p "$PREVIEW_DIR"
+          cat > "$PREVIEW_DIR/namespace.yaml" <<'NS_EOF'
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              name: pr-${{ github.event.pull_request.number }}
+              NS_EOF
           IFS=',' read -ra SVC <<< "$SERVICES"
           {
             echo "apiVersion: kustomize.config.k8s.io/v1beta1"
             echo "kind: Kustomization"
             echo "namespace: pr-${{ github.event.pull_request.number }}"
             echo "resources:"
+            echo "  - ../../base/petclinic"
             for s in "${SVC[@]}"; do
               echo "  - ../../base/$s"
             done
@@ -102,5 +109,12 @@ jobs:
             echo "  - path: patches.yaml"
           } 
            > "$PREVIEW_DIR/kustomization.yaml"
-          echo "${{ needs.build.outputs.preview_patch }}"
-          # git add "$PREVIEW_DIR/kustomization.yaml"
+          echo "${{ needs.build.outputs.preview_patch }}" >> "$PREVIEW_DIR/patches.yaml"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add  $PREVIEW_DIR/patches.yaml
+          git add  $PREVIEW_DIR/namespace.yaml
+          git add "$PREVIEW_DIR/kustomization.yaml"
+          hit commit -m "chore: preview update für PR #${{ github.event.pull_request.number }}"
+          git push origin main
+          fi
