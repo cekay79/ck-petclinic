@@ -51,7 +51,7 @@ jobs:
 
       - name: create preview patch
         id: preview_patch
-        run:
+        run: |
           REG="ckcluster.azurecr.io"
           CHART_VERSION="0.1.0-${GITHUB_SHA::7}"
           # Quelle anpassen: patches-template.yaml ist ein Platzhalter
