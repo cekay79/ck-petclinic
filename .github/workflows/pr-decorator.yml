@@ -50,6 +50,13 @@ jobs:
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch
+          path: patches.yaml
+          retention-days: 1
+
       - name: Build and push Docker image to ACR
         run: |
           REG="ckcluster.azurecr.io"
@@ -75,8 +82,6 @@ jobs:
     needs: build
 
     steps:
-      - env:
-          PATCH1: ${{needs.build.outputs.preview_patch}}
       - name: Checkout Ziel-Repo (Flux Config)
         uses: actions/checkout@v4
         with:
@@ -89,7 +94,12 @@ jobs:
         run: |
           echo "SERVICES=$(jq -r '.event.pull_request.labels[].name | select(startswith("svc:")) | sub("^svc:";"")' \
             <<< '${{ toJson(github) }}' | paste -sd, -)" >> $GITHUB_ENV
-      
+
+      - name: getpatch
+        uses: actions/download-artifact@v5
+        with:
+          name: patch
+
       - name: Build kustomization.yaml from labels
         #if: env.SERVICES != ''
         run: |
@@ -116,10 +126,9 @@ jobs:
             echo "patches:"
             echo "  - path: patches.yaml"
           } > "$PREVIEW_DIR/kustomization.yaml"
-          echo "$(PATCH1)" 
-          echo "$(PATCH1)" >> "$PREVIEW_DIR/patches.yaml"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+          cp patches.yaml $PREVIEW_DIR/patches.yaml
           git add  $PREVIEW_DIR/patches.yaml
           git add  $PREVIEW_DIR/namespace.yaml
           git add "$PREVIEW_DIR/kustomization.yaml"
