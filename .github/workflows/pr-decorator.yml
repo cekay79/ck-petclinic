@@ -86,7 +86,7 @@ jobs:
             <<< '${{ toJson(github) }}' | paste -sd, -)" >> $GITHUB_ENV
       
       - name: Build kustomization.yaml from labels
-        if: env.SERVICES != ''
+        #if: env.SERVICES != ''
         run: |
           PREVIEW_DIR="clusters/npi/previews/pr-${{ github.event.pull_request.number }}"
           mkdir -p "$PREVIEW_DIR"
